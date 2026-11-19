@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <!-- ASCII-only HTML, CSS and JS source: safe when embedded platforms override HTTP charset. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>OIS Agent Improvement Challenge &#xB7; Leaderboard</title>
+  <style>
+    :root {
+      --bg:#0b101d; --card:#151d2d; --card-2:#192337; --line:#2a3448;
+      --text:#f2f4fa; --muted:#9aa8bc; --subtle:#71839f;
+      --gold:#eabf74; --gold-bright:#ffdb92; --blue:#85b7f2;
+      --mint:#7bd6bd; --red:#f5a5a5; --radius:18px;
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; min-width:320px; color:var(--text); background:var(--bg); font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.5; }
+    body::before { content:""; position:fixed; inset:0; pointer-events:none; z-index:-1; background:radial-gradient(ellipse 65% 48% at 73% -10%,rgba(141,117,199,.20),transparent 72%),radial-gradient(ellipse 48% 50% at 0% 15%,rgba(58,111,156,.16),transparent 74%); }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { opacity:.48; cursor:not-allowed; }
+    a { color:inherit; }
+    a:focus-visible,button:focus-visible,input:focus-visible { outline:2px solid var(--gold-bright); outline-offset:3px; }
+    .shell { max-width:1240px; margin:0 auto; padding:0 28px 44px; }
+    .top { display:flex; align-items:center; gap:18px; min-height:78px; border-bottom:1px solid rgba(255,255,255,.085); }
+    .brand { display:flex; align-items:center; gap:12px; text-decoration:none; }
+    .logo { display:grid; place-items:center; width:39px; height:39px; background:linear-gradient(140deg,#efc981,#b78e50); color:#161921; font-weight:900; font-size:15px; letter-spacing:-1px; border-radius:11px; box-shadow:0 4px 24px #eec77a20; }
+    .brand strong { font-size:14px; letter-spacing:.11em; }
+    .brand small { display:block; color:var(--muted); font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
+    .top-right { margin-left:auto; display:flex; align-items:center; gap:14px; }
+    .status { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); max-width:330px; }
+    .status-dot { display:inline-block; width:8px; height:8px; border-radius:100%; background:#8390a6; flex:none; box-shadow:0 0 0 4px #ffffff08; }
+    .status-dot.ok { background:var(--mint); box-shadow:0 0 0 4px #7bd6bd18; }
+    .status-dot.busy { background:var(--gold); animation:pulse 1.2s infinite; }
+    .status-dot.bad { background:var(--red); }
+    @keyframes pulse { 50% { opacity:.3; } }
+    .action { border:1px solid var(--line); background:#1a2639; color:var(--text); border-radius:10px; padding:10px 15px; font-size:13px; font-weight:650; transition:background .2s,border-color .2s,transform .2s; }
+    .action:hover:not(:disabled) { background:#25344b; border-color:#56627a; }
+    .action:active:not(:disabled) { transform:translateY(1px); }
+    .action.primary { background:linear-gradient(120deg,#f2d093,#ddb06b); color:#23212a; border-color:transparent; box-shadow:0 5px 20px #eabf7425; }
+    .action.primary:hover:not(:disabled) { background:linear-gradient(120deg,#ffe0a7,#e9bc7b); }
+    .action.small { padding:8px 11px; font-size:12px; }
+    .action.ghost { background:transparent; }
+    .hero { display:grid; grid-template-columns:minmax(0,1fr) 292px; align-items:center; gap:36px; padding:44px 0 29px; }
+    .kicker { display:inline-flex; gap:9px; align-items:center; color:var(--gold); font-size:12px; font-weight:750; letter-spacing:.17em; text-transform:uppercase; }
+    h1 { font-size:clamp(33px,4.4vw,57px); letter-spacing:-.055em; line-height:1.07; margin:13px 0 16px; font-weight:820; }
+    h1 .accent { display:block; color:var(--gold-bright); }
+    .subtitle { font-size:15px; color:#aebbcc; max-width:650px; line-height:1.75; margin:0; }
+    .subtitle strong { color:var(--text); font-weight:650; }
+    .hero-meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+    .chip { padding:7px 10px; border:1px solid #344052; background:#162030bb; border-radius:7px; font-size:12px; color:#b8c8d9; }
+    .chip b { color:var(--text); }
+    .countdown { position:relative; overflow:hidden; border:1px solid #9a754f72; background:linear-gradient(145deg,#362c30,#1c2231 68%); border-radius:21px; padding:22px 24px; min-height:214px; box-shadow:0 16px 45px #00000025; }
+    .countdown::after { content:"\1F377 "; position:absolute; right:-8px; bottom:-29px; font-size:111px; opacity:.10; transform:rotate(-18deg); pointer-events:none; }
+    .countdown-label { color:#f2d7a9; font-weight:650; font-size:12px; letter-spacing:.1em; text-transform:uppercase; }
+    .prize { display:flex; align-items:center; gap:9px; font-size:19px; font-weight:780; margin:10px 0 8px; }
+    .countdown-time { font-size:40px; letter-spacing:-.045em; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.2; margin:12px 0 6px; }
+    .countdown-foot { font-size:12px; color:#beb5ae; }
+    .source { background:#151e2dcb; border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin-bottom:22px; }
+    .source-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }
+    .source-head b { font-size:13px; }
+    .source-head small { color:var(--muted); font-size:12px; }
+    .source-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .api-mode { display:flex; align-items:center; gap:10px; flex:1 1 250px; font-size:13px; color:var(--muted); }
+    .api-mode-mark { display:inline-flex; align-items:center; justify-content:center; background:#203d39; color:var(--mint); border:1px solid #37645a; border-radius:8px; padding:9px 11px; font-size:12px; font-weight:750; }
+    .source-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .help-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:9px; margin-top:13px; font-size:11px; color:var(--subtle); }
+    .inline-link { color:#a2c7fb; text-underline-offset:3px; }
+    .switch { display:flex; align-items:center; gap:7px; cursor:pointer; color:#bac9d8; }
+    .switch input { accent-color:#e0b46e; cursor:pointer; }
+    .notice { margin-top:13px; border-radius:10px; padding:10px 12px; background:#253247; color:#b7c8df; font-size:12px; display:none; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .notice.visible { display:block; }
+    .notice.error { background:#4b2832; color:#ffd6d7; }
+    .notice.success { background:#203d39; color:#bdf0df; }
+    .demo-banner { display:none; align-items:center; gap:10px; background:#504028; border:1px solid #b78e50; color:#ffe4a8; border-radius:10px; padding:9px 13px; margin-bottom:17px; font-size:12px; font-weight:750; letter-spacing:.03em; }
+    .demo-banner.show { display:flex; }
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+    .metric { background:#171f30d9; border:1px solid #2b364b; border-radius:14px; padding:16px 20px 18px; min-width:0; }
+    .metric-label { color:var(--muted); font-size:12px; margin-bottom:5px; }
+    .metric-value { font-size:32px; font-weight:790; line-height:1.25; letter-spacing:-.035em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .metric-value.small-text { font-size:20px; padding:8px 0; }
+    .metric-value.gold { color:var(--gold); }
+    .metric-foot { font-size:11px; color:var(--subtle); margin-top:4px; }
+    .board { display:grid; grid-template-columns:minmax(0,1.18fr) minmax(320px,.82fr); gap:20px; align-items:start; }
+    .panel { background:#151e2edf; border:1px solid #2a3549; border-radius:17px; overflow:hidden; }
+    .panel-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:20px 22px 13px; }
+    .panel-title { margin:0; font-weight:760; font-size:17px; letter-spacing:-.025em; }
+    .panel-caption { font-size:12px; color:var(--muted); margin:4px 0 0; }
+    .section-label { font-size:10px; color:var(--subtle); font-weight:800; letter-spacing:.13em; text-transform:uppercase; padding:0 22px 12px; }
+    .podium { display:grid; grid-template-columns:1fr 1.15fr 1fr; align-items:end; gap:9px; padding:19px 18px 25px; background:radial-gradient(ellipse 65% 96% at 50% 60%,#53412d28,transparent 85%); }
+    .podium-person { display:flex; flex-direction:column; align-items:center; background:transparent; padding:0 1px; border:0; color:inherit; min-width:0; width:100%; }
+    .podium-person:hover .podium-avatar { transform:translateY(-4px); }
+    .podium-person:disabled { opacity:.55; cursor:default; }
+    .podium-person.selected .podium-avatar { box-shadow:0 0 0 4px #85b7f26b; }
+    .podium-avatar { width:61px; height:61px; display:grid; place-items:center; border:3px solid #76849b; border-radius:50%; font-weight:800; font-size:20px; margin-bottom:9px; transition:transform .2s; background:#34445a; }
+    .podium-person.first .podium-avatar { width:83px; height:83px; font-size:27px; border-color:var(--gold); box-shadow:0 0 0 4px #eabf741d; }
+    .podium-person.second .podium-avatar { border-color:#bbc9db; }
+    .podium-person.third .podium-avatar { border-color:#c98e70; }
+    .podium-medal { font-size:19px; line-height:1; height:24px; }
+    .podium-name { color:#e9eef8; font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+    .podium-handle { font-size:11px; color:var(--subtle); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pedestal { width:100%; margin-top:15px; border-top:2px solid #8b7e74; background:linear-gradient(#4f56684a,#2a344141); border-radius:9px 9px 2px 2px; display:flex; justify-content:center; align-items:center; gap:7px; }
+    .pedestal b { font-size:25px; font-weight:840; }
+    .pedestal small { font-size:11px; color:#b3bfcc; }
+    .first .pedestal { height:87px; border-color:var(--gold); background:linear-gradient(#7d5e3870,#493b3040); }
+    .second .pedestal { height:64px; border-color:#bdc9d8; }
+    .third .pedestal { height:51px; border-color:#be896f; }
+    .leader-list { border-top:1px solid var(--line); }
+    .leader { display:grid; grid-template-columns:28px 40px minmax(0,1fr) 40px; align-items:center; gap:12px; width:100%; border:0; border-bottom:1px solid #273147; text-align:left; padding:13px 22px; background:transparent; color:var(--text); }
+    .leader:hover { background:#202b3ed4; }
+    .leader.active { background:#243449; box-shadow:inset 3px 0 var(--blue); }
+    .leader:last-child { border-bottom:0; }
+    .leader-place { color:var(--subtle); font-size:13px; font-weight:750; font-variant-numeric:tabular-nums; }
+    .avatar { display:grid; place-items:center; border-radius:12px; width:40px; height:40px; color:#f0f6ff; font-weight:700; font-size:12px; }
+    .leader-info { min-width:0; }
+    .leader-info strong { display:block; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .leader-info small { display:block; font-size:11px; color:var(--subtle); margin-bottom:7px; }
+    .bar { height:5px; background:#313d50; border-radius:5px; overflow:hidden; }
+    .bar-fill { display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,#9faac1,#8cb8e5); }
+    .leader:first-child .bar-fill { background:linear-gradient(90deg,#ce9852,#ffe09a); }
+    .leader-score { font-variant-numeric:tabular-nums; text-align:right; font-size:22px; font-weight:820; }
+    .panel-foot { padding:15px 21px; font-size:11px; color:var(--subtle); border-top:1px solid var(--line); }
+    .side-stack { display:grid; gap:20px; }
+    .chart-wrap { padding:6px 18px 19px; }
+    .chart { height:165px; display:grid; grid-template-columns:repeat(14,minmax(0,1fr)); align-items:end; gap:5px; border-bottom:1px solid #344055; padding-bottom:0; }
+    .day-col { min-width:0; display:flex; align-items:center; flex-direction:column; justify-content:flex-end; height:100%; background:none; border:0; color:var(--muted); padding:0; position:relative; }
+    .day-col:hover .day-fill { filter:brightness(1.3); }
+    .day-col.selected .day-fill { background:var(--gold-bright); }
+    .day-col.selected .day-num { color:var(--gold-bright); }
+    .day-num { font-size:10px; margin-bottom:5px; font-variant-numeric:tabular-nums; }
+    .day-track { width:100%; height:126px; display:flex; align-items:flex-end; border-radius:4px 4px 0 0; background:linear-gradient(#ffffff05,#ffffff01); }
+    .day-fill { width:100%; min-height:0; background:linear-gradient(180deg,#d9b678,#947956); border-radius:4px 4px 0 0; transition:height .35s ease; }
+    .day-date { font-size:9px; height:20px; line-height:20px; color:var(--subtle); white-space:nowrap; }
+    .chart-key { display:flex; align-items:center; justify-content:space-between; color:var(--subtle); font-size:11px; margin-top:7px; }
+    .chart-key button { border:0; background:none; color:var(--blue); font-size:11px; padding:2px; }
+    .feed-list { max-height:433px; overflow:auto; }
+    .feed-item { padding:13px 20px; display:flex; gap:11px; border-top:1px solid #273147; }
+    .feed-avatar { width:33px; height:33px; font-size:10px; border-radius:10px; flex:none; }
+    .feed-body { min-width:0; flex:1; }
+    .feed-top { display:flex; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); font-size:11px; }
+    .feed-top strong { font-size:11px; color:#d6e0ed; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .feed-link { display:block; color:#f0f4f9; font-size:12px; font-weight:600; margin-top:4px; text-decoration:none; line-height:1.5; }
+    a.feed-link:hover { color:var(--gold-bright); text-decoration:underline; text-underline-offset:3px; }
+    .feed-id { color:var(--blue); font-size:11px; font-weight:750; margin-right:5px; }
+    .filter-label { font-size:11px; display:inline-flex; align-items:center; gap:6px; color:#cbd7e8; background:#25374b; border:1px solid #3b506c; padding:5px 8px; border-radius:7px; }
+    .filter-label button { border:0; background:none; color:#d9e6f6; font-size:15px; padding:0; line-height:1; }
+    .empty { padding:36px 26px 42px; text-align:center; }
+    .empty .symbol { font-size:33px; display:block; margin-bottom:9px; }
+    .empty h3 { font-size:15px; margin:0 0 7px; }
+    .empty p { font-size:12px; color:var(--muted); margin:0 auto; max-width:320px; }
+    .global-footer { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; font-size:11px; color:var(--subtle); margin-top:24px; padding:3px 2px; }
+    .global-footer a { color:#9fc5f1; }
+    .hidden { display:none !important; }
+    @media (max-width:960px) { .board { grid-template-columns:1fr; } .side-stack { grid-template-columns:1fr 1fr; gap:16px; } .hero { grid-template-columns:minmax(0,1fr) 265px; gap:12px; } .countdown { padding:20px; } .feed-list { max-height:450px; } }
+    @media (max-width:710px) { .shell { padding:0 14px 35px; } .hero { grid-template-columns:1fr; padding:31px 0 20px; } .countdown { min-height:0; } .countdown-time { font-size:34px; } .top { min-height:67px; } .status { max-width:130px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; } .top-right { gap:7px; } .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .metric { padding:14px 15px; } .source { padding:16px; } .side-stack { grid-template-columns:1fr; } .board { gap:15px; } .podium { padding-left:13px; padding-right:13px; } .panel-header { padding:17px 17px 12px; } .leader { padding:12px 15px; gap:9px; } .global-footer { padding:3px; } }
+    @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+
+    /* Fullscreen 16:9 dashboard (self-contained: no external fonts or scripts) */
+    .tools { position:relative; flex:none; }
+    .tools summary { list-style:none; user-select:none; min-width:42px; text-align:center; padding:8px 10px; }
+    .tools summary::-webkit-details-marker { display:none; }
+    .tools-popover { position:absolute; right:0; top:calc(100% + 10px); z-index:40; width:265px; padding:9px; border:1px solid #45516b; border-radius:14px; background:#202b3d; box-shadow:0 18px 45px #0009; }
+    .tools-heading { color:var(--subtle); font-size:10px; font-weight:850; letter-spacing:.14em; padding:8px 11px; }
+    .tools-popover > button { display:block; width:100%; text-align:left; border:0; border-radius:8px; background:none; color:var(--text); padding:10px 12px; font-size:13px; }
+    .tools-popover > button:hover:not(:disabled) { background:#344157; }
+    .tools-switch { display:flex; gap:8px; align-items:center; border-top:1px solid var(--line); padding:12px 8px 4px; font-size:12px; color:#c8d5e4; cursor:pointer; }
+    .tools-switch input { accent-color:var(--gold); }
+    .notice { position:fixed; z-index:50; bottom:22px; right:24px; width:min(570px,calc(100vw - 38px)); margin:0; border:1px solid #5b6a86; box-shadow:0 15px 40px #0009; padding:13px 17px; font-size:12px; }
+    .notice.success { border-color:#407365; }
+    .notice.error { border-color:#8a4a58; }
+    .demo-banner { position:fixed; z-index:25; left:50%; top:7px; transform:translateX(-50%); margin:0; white-space:nowrap; box-shadow:0 8px 20px #0008; }
+    .panel, .metric { box-shadow:0 4px 24px #05091614; }
+    .chart-key button { cursor:pointer; }
+    @media (min-width:1000px) and (min-aspect-ratio:3/2) {
+      html, body { width:100%; height:100%; overflow:hidden; }
+      .shell { display:flex; flex-direction:column; width:100%; max-width:none; height:100dvh; min-height:0; padding:0 clamp(18px,2.05vw,42px) 12px; }
+      .top { flex:none; min-height:64px; }
+      .brand strong { font-size:15px; }
+      .status { max-width:none; font-size:12px; }
+      main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+      .hero { flex:none; grid-template-columns:minmax(0,1fr) minmax(280px,370px); gap:24px; padding:20px 0 16px; }
+      .kicker { font-size:11px; }
+      h1 { font-size:clamp(31px,2.42vw,48px); margin:7px 0 10px; line-height:1.12; }
+      h1 .accent { display:inline; margin-left:.24em; }
+      .subtitle { font-size:13px; line-height:1.5; max-width:900px; }
+      .hero-meta { margin-top:12px; gap:8px; }
+      .chip { padding:5px 10px; font-size:11px; }
+      .countdown { min-height:0; padding:15px 20px; border-radius:16px; }
+      .countdown-label { font-size:10px; }
+      .prize { font-size:16px; margin:7px 0; }
+      .countdown-time { font-size:clamp(30px,2.2vw,40px); margin:5px 0 2px; }
+      .countdown-foot { font-size:11px; }
+      .metrics { flex:none; gap:12px; margin-bottom:14px; }
+      .metric { padding:12px 18px; }
+      .metric-label { font-size:11px; margin-bottom:2px; }
+      .metric-value { font-size:clamp(26px,2vw,34px); }
+      .metric-value.small-text { font-size:clamp(16px,1.2vw,23px); padding:7px 0; overflow:hidden; text-overflow:ellipsis; }
+      .metric-foot { margin-top:2px; }
+      .board { flex:1 1 auto; min-height:0; grid-template-columns:minmax(0,1.17fr) minmax(0,.83fr); gap:14px; align-items:stretch; }
+      .board > .panel { display:flex; flex-direction:column; min-height:0; }
+      .panel-header { flex:none; padding:15px 19px 10px; }
+      .panel-title { font-size:18px; }
+      .panel-caption { font-size:11px; margin:2px 0 0; }
+      .panel-foot { flex:none; padding:10px 17px; font-size:10px; }
+      .podium { flex:none; padding:12px 18px 14px; gap:12px; }
+      .podium-avatar { width:62px; height:62px; margin-bottom:7px; }
+      .podium-person.first .podium-avatar { width:80px; height:80px; }
+      .podium-medal { height:22px; }
+      .podium-name { font-size:14px; }
+      .podium-handle { font-size:11px; }
+      .pedestal { margin-top:10px; }
+      .first .pedestal { height:66px; }
+      .second .pedestal { height:50px; }
+      .third .pedestal { height:40px; }
+      .section-label { flex:none; padding:0 19px 8px; }
+      .leader-list { flex:1 1 auto; min-height:0; overflow:auto; scrollbar-color:#48546c transparent; }
+      .leader { padding:11px 19px; gap:11px; }
+      .side-stack { display:grid; grid-template-rows:minmax(0,.40fr) minmax(0,.60fr); gap:14px; min-height:0; }
+      .side-stack > .panel { display:flex; flex-direction:column; min-height:0; }
+      .chart-wrap { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; padding:3px 18px 12px; }
+      .chart { flex:1 1 auto; min-height:0; height:auto; }
+      .day-col { min-height:0; }
+      .day-track { flex:1 1 auto; min-height:0; height:auto; }
+      .chart-key { flex:none; }
+      .feed-list { flex:1 1 auto; min-height:0; max-height:none; overflow:auto; scrollbar-color:#48546c transparent; }
+      .feed-item { padding:11px 18px; }
+      .global-footer { flex:none; margin-top:8px; padding:0 2px; font-size:10px; }
+    }
+    @media (min-width:1000px) and (min-aspect-ratio:3/2) and (max-height:840px) {
+      .shell { padding-bottom:7px; }
+      .top { min-height:52px; }
+      .logo { width:33px; height:33px; }
+      .action.small { padding:6px 10px; }
+      .hero { padding:9px 0 10px; gap:14px; grid-template-columns:minmax(0,1fr) minmax(260px,310px); }
+      .kicker { font-size:10px; }
+      h1 { font-size:clamp(29px,2.42vw,40px); margin:4px 0 6px; }
+      .subtitle { font-size:11px; line-height:1.4; }
+      .hero-meta { margin-top:8px; }
+      .chip { padding:4px 8px; font-size:10px; }
+      .countdown { padding:10px 15px; }
+      .prize { font-size:14px; margin:3px 0; }
+      .countdown-time { font-size:28px; margin:2px 0; }
+      .metrics { gap:9px; margin-bottom:10px; }
+      .metric { padding:7px 13px 8px; }
+      .metric-label { font-size:10px; }
+      .metric-value { font-size:25px; }
+      .metric-value.small-text { font-size:16px; padding:5px 0; }
+      .metric-foot { font-size:9px; }
+      .board { gap:11px; }
+      .side-stack { gap:11px; grid-template-rows:minmax(0,.39fr) minmax(0,.61fr); }
+      .panel-header { padding:10px 16px 7px; }
+      .panel-title { font-size:16px; }
+      .panel-caption { font-size:10px; }
+      .podium { padding:5px 13px 7px; gap:8px; }
+      .podium-avatar { width:42px; height:42px; margin-bottom:4px; font-size:15px; border-width:2px; }
+      .podium-person.first .podium-avatar { width:56px; height:56px; font-size:20px; border-width:2px; }
+      .podium-medal { font-size:16px; height:19px; }
+      .podium-name { font-size:12px; }
+      .podium-handle { font-size:10px; }
+      .pedestal { margin-top:5px; }
+      .pedestal b { font-size:20px; }
+      .first .pedestal { height:46px; }
+      .second .pedestal { height:35px; }
+      .third .pedestal { height:27px; }
+      .section-label { font-size:9px; padding:0 16px 5px; }
+      .leader { grid-template-columns:24px 34px minmax(0,1fr) 35px; padding:7px 14px; gap:9px; }
+      .avatar { width:34px; height:34px; font-size:11px; }
+      .leader-info strong { font-size:12px; }
+      .leader-info small { margin-bottom:4px; font-size:10px; }
+      .leader-score { font-size:19px; }
+      .panel-foot { padding:7px 14px; font-size:9px; }
+      .chart-wrap { padding:2px 14px 7px; }
+      .feed-item { padding:8px 13px; gap:8px; }
+      .feed-avatar { width:28px; height:28px; }
+      .feed-link { font-size:11px; line-height:1.35; }
+      .feed-top { font-size:10px; }
+      .global-footer { margin-top:5px; font-size:9px; }
+    }
+    @media (min-width:1000px) and (min-aspect-ratio:3/2) and (min-height:841px) and (max-height:980px) {
+      .podium { padding-top:8px; padding-bottom:9px; }
+      .podium-avatar { width:53px; height:53px; }
+      .podium-person.first .podium-avatar { width:68px; height:68px; }
+      .first .pedestal { height:53px; }
+      .second .pedestal { height:40px; }
+      .third .pedestal { height:31px; }
+      .leader { padding-top:9px; padding-bottom:9px; }
+    }
+    @media (max-width:999px), (max-aspect-ratio:3/2) {
+      .shell { max-width:1240px; }
+      .toolbar-button span { display:none; }
+      .tools-popover { right:0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="brand" href="#top" aria-label="Til toppen">
+        <span class="logo">OIS</span>
+        <span><strong>AGENT LAB</strong><small>Improvement Challenge</small></span>
+      </a>
+      <div class="top-right">
+        <span class="status"><span id="statusDot" class="status-dot"></span><span id="statusText">Henter resultater &#x2026;</span></span>
+        <button id="refreshTop" class="action small toolbar-button" type="button" title="Oppdater fra GitLab" aria-label="Oppdater fra GitLab">&#x21BB; <span>Oppdater</span></button>
+        <button id="fullscreenBtn" class="action small toolbar-button" type="button" title="Vis i fullskjerm" aria-label="Vis i fullskjerm">&#x26F6; <span>Fullskjerm</span></button>
+        <details class="tools" id="toolsMenu">
+          <summary class="action small" aria-label="Flere valg" title="Flere valg">&#x2022;&#x2022;&#x2022;</summary>
+          <div class="tools-popover">
+            <div class="tools-heading">FLERE VALG</div>
+            <button id="importBtn" type="button">Importer JSON</button>
+            <input id="jsonFile" class="hidden" type="file" accept=".json,.jsonl,.ndjson,application/json">
+            <button id="demoBtn" type="button">Vis demodata</button>
+            <button id="exportBtn" type="button" disabled>Eksporter CSV</button>
+            <label class="tools-switch"><input id="autoRefresh" type="checkbox" checked> Oppdater automatisk (2 min)</label>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="headline">
+        <div>
+          <div class="kicker">&#x2726; &nbsp; KNOWLEDGE BASE &#xB7; SKILLS &#xB7; AGENT FIXES</div>
+          <h1 id="headline">Smartere agenter.<span class="accent">&#xC9;n merge om gangen.</span></h1>
+          <p class="subtitle">Hvem gj&#xF8;r OIS-agentene litt bedre hver dag? <strong>Flest mergede MRs</strong> p&#xE5; <strong>OIS-6712</strong> innen fristen tar seieren. Hver forbedring teller. &#x1F3C6;</p>
+          <div class="hero-meta">
+            <span class="chip"><b>Start</b> &#xB7; 18. nov. 2026, 08:00</span>
+            <span class="chip"><b>Slutt</b> &#xB7; 1. des. 2026, 10:00</span>
+            <span class="chip"><b>Prosjekt</b> &#xB7; #670</span>
+          </div>
+        </div>
+        <div class="countdown" aria-label="Premie og nedtelling">
+          <div class="countdown-label">Premien</div>
+          <div class="prize">&#x1F3C6; &nbsp; En vellagret flaske vin</div>
+          <div class="countdown-time" id="countdown">&#x2014;</div>
+          <div class="countdown-foot" id="countdownFoot">til konkurransen avsluttes</div>
+        </div>
+      </section>
+
+
+      <div id="demoBanner" class="demo-banner">&#x26A0; DEMOVISNING &#x2014; FIKTIVE DELTAKERE OG MRs. IKKE FAKTISKE RESULTATER.</div>
+
+      <section class="metrics" aria-label="Konkurransestatistikk">
+        <div class="metric"><div class="metric-label">Kvalifiserte MRs</div><div class="metric-value gold" id="totalMRs">0</div><div class="metric-foot" id="totalFoot">Ingen data</div></div>
+        <div class="metric"><div class="metric-label">Deltakere</div><div class="metric-value" id="participantCount">0</div><div class="metric-foot">Unike MR-forfattere</div></div>
+        <div class="metric"><div class="metric-label">I ledelsen</div><div class="metric-value small-text" id="leaderName">&#x2014;</div><div class="metric-foot" id="leaderFoot">Venter p&#xE5; f&#xF8;rste MR</div></div>
+        <div class="metric"><div class="metric-label">Siste merge</div><div class="metric-value small-text" id="latestMerge">&#x2014;</div><div class="metric-foot" id="latestFoot">Europe/Oslo</div></div>
+      </section>
+
+      <section class="board" aria-label="Resultattavle">
+        <div class="panel">
+          <div class="panel-header"><div><h2 class="panel-title">&#x1F3C5; &nbsp;Leaderboard</h2><p class="panel-caption" id="podiumCaption">Antall mergede MRs avgj&#xF8;r plasseringen</p></div></div>
+          <div class="podium" id="podium"></div>
+          <div class="section-label">ALLE DELTAKERE</div>
+          <div class="leader-list" id="leaderList"></div>
+          <div class="panel-foot">Ved likt antall MRs deles plasseringen. Klikk p&#xE5; en deltaker for &#xE5; se vedkommendes merges.</div>
+        </div>
+        <div class="side-stack">
+          <div class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">&#x1F4C8; &nbsp;Merges over tid</h2><p class="panel-caption">Per dag gjennom konkurransen &#xB7; norsk tid</p></div></div>
+            <div class="chart-wrap"><div class="chart" id="chart" aria-label="Daglig antall merges"></div><div class="chart-key"><span>18. nov. &#x2013; 1. des.</span><button id="clearDay" type="button" class="hidden">Fjern datofilter &#xD7;</button></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">&#x26A1; &nbsp;Siste forbedringer</h2><p class="panel-caption" id="feedSubtitle">Mergede MRs &#xB7; nyeste f&#xF8;rst</p></div><span id="activeFilter"></span></div>
+            <div class="feed-list" id="feedList"></div>
+            <div class="panel-foot" id="feedFoot">Klikk en MR for &#xE5; &#xE5;pne den i GitLab.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <footer class="global-footer"><span>OIS Agent Improvement Challenge 2026 &#xB7; Teller MR-forfatteren &#xB7; 1 MR = 1 poeng &#xB7; @oysteinl ekskludert</span><span>Datakilde: <a href="https://gitlab.statnett.no/search?search=OIS-6712&amp;project_id=670&amp;group_id=71&amp;scope=merge_requests&amp;state=merged" target="_blank" rel="noopener noreferrer">GitLab OIS-6712 &#x2197;</a> &#xB7; Kun klient-side JS/CSS</span></footer>
+  </div>
+
+  <script>
+    'use strict';
+    // The competition uses Oslo winter time (CET, UTC+1). The half-open range is
+    // [2026-11-18 08:00, 2026-12-01 10:00) in Europe/Oslo.
+    const CONFIG = Object.freeze({
+      base: 'https://gitlab.statnett.no', project: 670, term: 'OIS-6712',
+      start: '2026-11-18T07:00:00Z', end: '2026-12-01T09:00:00Z',
+      excludedUsernames: ['oysteinl'],
+      pageSize: 100, maxPages: 200
+    });
+    const START = Date.parse(CONFIG.start), END = Date.parse(CONFIG.end);
+    const HOUR_MS = 60 * 60 * 1000;
+    const EXCLUDED_USERNAMES = new Set(CONFIG.excludedUsernames.map(x => x.toLowerCase()));
+    const $ = id => document.getElementById(id);
+    const fmtNum = new Intl.NumberFormat('nb-NO');
+    const fmtTime = new Intl.DateTimeFormat('nb-NO', {timeZone:'Europe/Oslo',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const fmtFull = new Intl.DateTimeFormat('nb-NO', {timeZone:'Europe/Oslo',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const fmtDay = new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit'});
+    const DAYS = Array.from({length:14},(_,i)=>new Date(Date.UTC(2026,10,18+i)).toISOString().slice(0,10));
+    const STATE = {raw:[], qualified:[], leaders:[], isDemo:false, hasData:false, selectedUser:null, selectedDay:null, busy:false, lastLoaded:null, autoTimer:null, request:null};
+
+    function escapeHTML(x) { return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function safeLink(value) { try { const u=new URL(value); return u.protocol==='https:' && u.hostname==='gitlab.statnett.no' ? u.href : ''; } catch { return ''; } }
+    function colorFor(s) { let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return `hsl(${h%360} 36% 34%)`; }
+    function initials(name) { return String(name||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toLocaleUpperCase('nb-NO'); }
+    function avatar(name, key, large=false) { return `<span class="${large?'podium-avatar':'avatar'}" style="background:${colorFor(key)}">${escapeHTML(initials(name))}</span>`; }
+    function setStatus(mode, msg) { $('statusDot').className='status-dot '+mode; $('statusText').textContent=msg; }
+    let noticeTimer;
+    function notice(msg,mode='') {
+      clearTimeout(noticeTimer);
+      $('notice').textContent=msg;
+      $('notice').className='notice'+(msg?' visible':'')+(mode?' '+mode:'');
+      if (msg && mode==='success') noticeTimer=setTimeout(()=>notice(''),4500);
+    }
+    function timeOslo(date, full=false) { return (full?fmtFull:fmtTime).format(new Date(date)); }
+    function dayOslo(date) { return fmtDay.format(new Date(date)); }
+    function userKey(author) { return author?.id!=null?'id:'+author.id:'user:'+String(author?.username||author?.name||'unknown').toLowerCase(); }
+    function normalizedJSON(text) {
+      let parsed;
+      try { parsed=JSON.parse(text); }
+      catch {
+        const rows=text.trim().split(/\r?\n/).filter(Boolean);
+        try { parsed=rows.map(line=>JSON.parse(line)); } catch { throw Error('Ugyldig JSON/NDJSON. Forventet en liste med GitLab merge requests.'); }
+      }
+      if (Array.isArray(parsed) && parsed.every(x=>Array.isArray(x))) parsed=parsed.flat();
+      if (!Array.isArray(parsed)) parsed=parsed.merge_requests||parsed.items||parsed.data;
+      if (!Array.isArray(parsed)) throw Error('JSON m\u00E5 v\u00E6re en liste med merge requests (GitLab API-format).');
+      if (parsed.length && !parsed.some(x=>x && (x.merged_at!==undefined || x.title!==undefined))) throw Error('JSON inneholder ikke gjenkjennelige GitLab merge requests.');
+      return parsed;
+    }
+    function qualify(raw) {
+      const seen=new Set(), out=[];
+      for(const mr of raw) {
+        if(!mr || typeof mr!=='object') continue;
+        const identifier=mr.id??mr.iid;
+        if(identifier==null) continue;
+        const key=`${mr.project_id||CONFIG.project}:${identifier}`;
+        if(seen.has(key)) continue;
+        seen.add(key);
+        if(mr.project_id!=null && Number(mr.project_id)!==CONFIG.project) continue;
+        if(mr.state!=='merged' || !mr.merged_at || !Number.isFinite(Date.parse(mr.merged_at))) continue;
+        const mergedAt=Date.parse(mr.merged_at);
+        if(mergedAt<START || mergedAt>=END) continue;
+        if(!`${mr.title||''}\n${mr.description||''}`.toLowerCase().includes(CONFIG.term.toLowerCase())) continue;
+        if(!mr.author || (!mr.author.username&&!mr.author.name)) continue;
+        // Exclusion applies to all downstream metrics, leaderboard, charts and exports.
+        if(EXCLUDED_USERNAMES.has(String(mr.author.username||'').toLowerCase())) continue;
+        out.push({...mr, _time:mergedAt, _user:userKey(mr.author)});
+      }
+      return out.sort((a,b)=>b._time-a._time);
+    }
+    function rank(qualified) {
+      const users=new Map();
+      for(const mr of qualified) {
+        let row=users.get(mr._user);
+        if(!row) { row={key:mr._user,name:mr.author.name||mr.author.username,username:mr.author.username||'',count:0,latest:0,mrs:[]}; users.set(mr._user,row); }
+        row.count++; row.latest=Math.max(row.latest,mr._time); row.mrs.push(mr);
+      }
+      const sorted=[...users.values()].sort((a,b)=>b.count-a.count || a.name.localeCompare(b.name,'nb'));
+      sorted.forEach((r,i)=>{r.place=(i && r.count===sorted[i-1].count)?sorted[i-1].place:i+1;});
+      return sorted;
+    }
+    function loadData(mrs, source, isDemo=false) {
+      STATE.raw=mrs; STATE.qualified=qualify(mrs); STATE.leaders=rank(STATE.qualified);
+      STATE.isDemo=isDemo; STATE.hasData=true; STATE.lastLoaded=new Date();
+      STATE.selectedUser=null; STATE.selectedDay=null;
+      $('demoBanner').classList.toggle('show',isDemo);
+      $('exportBtn').disabled=false;
+      const loadedHour = Math.floor(STATE.lastLoaded.getTime()/HOUR_MS)*HOUR_MS;
+      setStatus('ok',isDemo?'DEMOMODUS':`${STATE.qualified.length} MRs \u00B7 oppdatert ${timeOslo(loadedHour)}`);
+      notice(`${fmtNum.format(mrs.length)} mottatt \u00B7 ${fmtNum.format(STATE.qualified.length)} kvalifiserte MRs innenfor konkurranseperioden. ${mrs.length===0?'Ingen funnet for s\u00F8ket.':''}`, 'success');
+      render();
+    }
+    function render() { renderMetrics(); renderPodium(); renderLeaders(); renderChart(); renderFeed(); }
+    function renderMetrics() {
+      const arr=STATE.qualified, leaders=STATE.leaders;
+      $('totalMRs').textContent=fmtNum.format(arr.length);
+      $('totalFoot').textContent=STATE.hasData?`${fmtNum.format(STATE.raw.length)} treff hentet`:'Ingen data';
+      $('participantCount').textContent=fmtNum.format(leaders.length);
+      $('leaderName').textContent=leaders[0]?leaders.filter(x=>x.count===leaders[0].count).map(x=>x.name).join(', '):'\u2014';
+      $('leaderName').title=$('leaderName').textContent;
+      $('leaderFoot').textContent=leaders[0]?`${leaders[0].count} ${leaders[0].count===1?'MR':'MRs'} \u00B7 ${leaders.filter(x=>x.count===leaders[0].count).length>1?'Delt f\u00F8rsteplass':'Forel\u00F8pig leder'}`:'Venter p\u00E5 f\u00F8rste MR';
+      $('latestMerge').textContent=arr.length?timeOslo(arr[0].merged_at):'\u2014';
+      $('latestFoot').textContent='Norsk tid (Europe/Oslo)';
+    }
+    function renderPodium() {
+      const leaders=STATE.leaders;
+      const topCount=leaders.length?leaders.filter(x=>x.count===leaders[0].count).length:0;
+      $('podiumCaption').textContent=topCount>1
+        ? `${topCount} deler 1. plass${topCount>3?' (alle vises i listen under)':''} \u00B7 1 MR = 1 poeng`
+        : 'Antall mergede MRs avgj\u00F8r plasseringen';
+      // Visual order: runner-up, winner, third. The actual medal and pedestal
+      // always reflect the shared competition rank, NOT the array position.
+      const display=[leaders[1],leaders[0],leaders[2]];
+      const medals={1:'\u{1F947}',2:'\u{1F948}',3:'\u{1F949}'};
+      const classes={1:'first',2:'second',3:'third'};
+      $('podium').innerHTML=display.map((r,i)=>{
+        const type=r?(classes[r.place]||'third'):['second','first','third'][i];
+        const medal=r?(medals[r.place]||''):'';
+        const name=r?.name||'Ledig plass', handle=r?.username?'@'+r.username:'Ingen MRs enn\u00E5';
+        const shared=r&&leaders.some(other=>other.key!==r.key&&other.place===r.place);
+        const rankText=r?`${shared?'Delt ':''}${r.place}. plass`:'Ledig plass';
+        return `<button type="button" class="podium-person ${type} ${r&&STATE.selectedUser===r.key?'selected':''}" ${r?'data-user="'+escapeHTML(r.key)+'"':'disabled'} aria-label="${escapeHTML(rankText)}: ${escapeHTML(name)}, ${r?.count||0} merge requests">`+
+          `<span class="podium-medal" title="${escapeHTML(rankText)}">${medal}</span>${avatar(name,r?.key||type,true)}<span class="podium-name" title="${escapeHTML(name)}">${escapeHTML(name)}</span><span class="podium-handle">${escapeHTML(handle)}</span><span class="pedestal"><b>${r?.count||0}</b><small>${r?.count===1?'MR':'MRs'}</small></span></button>`;
+      }).join('');
+    }
+    function renderLeaders() {
+      const leaders=STATE.leaders;
+      if(!leaders.length) { $('leaderList').innerHTML=`<div class="empty"><span class="symbol">\u{1F3C1}</span><h3>${STATE.hasData?'Ingen kvalifiserte MRs enn\u00E5':'Klar for f\u00F8rste merge?'}</h3><p>${STATE.hasData?'S\u00F8ket ga ingen merges innenfor konkurranseperioden.':'Resultatene vises s\u00E5 snart GitLab har svart.'}</p></div>`; return; }
+      const max=leaders[0].count;
+      $('leaderList').innerHTML=leaders.map(row=>`<button class="leader ${STATE.selectedUser===row.key?'active':''}" type="button" data-user="${escapeHTML(row.key)}" aria-label="Filtrer MRs for ${escapeHTML(row.name)}"><span class="leader-place">${row.place.toString().padStart(2,'0')}</span>${avatar(row.name,row.key)}<span class="leader-info"><strong>${escapeHTML(row.name)}</strong><small>${escapeHTML('@'+row.username)}</small><span class="bar"><span class="bar-fill" style="width:${(row.count/max)*100}%"></span></span></span><span class="leader-score">${row.count}</span></button>`).join('');
+    }
+    function renderChart() {
+      const counts=new Map(DAYS.map(x=>[x,0]));
+      for(const mr of STATE.qualified) { const d=dayOslo(mr.merged_at); if(counts.has(d)) counts.set(d,counts.get(d)+1); }
+      const max=Math.max(1,...counts.values());
+      $('chart').innerHTML=DAYS.map(day=>{
+        const n=counts.get(day), pct=n?Math.max(7,n/max*100):0, selected=STATE.selectedDay===day;
+        return `<button type="button" class="day-col ${selected?'selected':''}" data-day="${day}" title="${day}: ${n} mergede MRs" aria-label="${day}: ${n} merges. Klikk for \u00E5 filtrere historikk"><span class="day-num">${n||''}</span><span class="day-track"><span class="day-fill" style="height:${pct}%"></span></span><span class="day-date">${Number(day.slice(-2))}</span></button>`;
+      }).join('');
+      $('clearDay').classList.toggle('hidden',!STATE.selectedDay);
+    }
+    function renderFeed() {
+      const selected=STATE.leaders.find(x=>x.key===STATE.selectedUser);
+      const filtered=STATE.qualified.filter(mr=>(!STATE.selectedUser||mr._user===STATE.selectedUser) && (!STATE.selectedDay||dayOslo(mr.merged_at)===STATE.selectedDay));
+      $('activeFilter').innerHTML=selected?`<span class="filter-label">${escapeHTML(selected.name)} <button type="button" id="clearUser" aria-label="Fjern brukerfilter">\u00D7</button></span>`:'';
+      $('feedSubtitle').textContent=STATE.selectedDay?`${STATE.selectedDay} \u00B7 nyeste f\u00F8rst`:'Mergede MRs \u00B7 nyeste f\u00F8rst';
+      $('feedFoot').textContent=`Viser ${filtered.length} av ${STATE.qualified.length} kvalifiserte MRs \u00B7 nyeste f\u00F8rst`;
+      if(!filtered.length) { $('feedList').innerHTML=`<div class="empty"><span class="symbol">\u2728</span><h3>${STATE.hasData?'Ingen merges i utvalget':'Venter p\u00E5 data'}</h3><p>${STATE.hasData?'Velg en annen dag eller deltaker for \u00E5 se flere MRs.':'Siste forbedringer vises automatisk etter at data er lastet.'}</p></div>`; return; }
+      $('feedList').innerHTML=filtered.map(mr=>{
+        const person=mr.author.name||mr.author.username, href=safeLink(mr.web_url), iid=mr.iid??mr.id;
+        const mrLink=href?`<a class="feed-link" href="${escapeHTML(href)}" target="_blank" rel="noopener noreferrer"><span class="feed-id">!${escapeHTML(iid)}</span>${escapeHTML(mr.title||'Uten tittel')} \u2197</a>`:`<span class="feed-link"><span class="feed-id">!${escapeHTML(iid)}</span>${escapeHTML(mr.title||'Uten tittel')}</span>`;
+        return `<article class="feed-item">${avatar(person,mr._user).replace('class="avatar"','class="avatar feed-avatar"')}<div class="feed-body"><div class="feed-top"><strong title="${escapeHTML(person)}">${escapeHTML(person)}</strong><time datetime="${escapeHTML(mr.merged_at)}" title="${escapeHTML(timeOslo(mr.merged_at,true))}">${escapeHTML(timeOslo(mr.merged_at))}</time></div>${mrLink}</div></article>`;
+      }).join('');
+    }
+    function renderCountdown() {
+      const now=Date.now(), until=now<START?START:END;
+      if(now>=END) { $('countdown').textContent='Avsluttet'; $('countdownFoot').textContent='Konkurransen ble avsluttet 1. des. 2026 kl. 10:00'; return; }
+      // Round up so the countdown changes at the hour, not one tick after it.
+      const hours=Math.ceil((until-now)/HOUR_MS), days=Math.floor(hours/24), h=hours%24;
+      $('countdown').textContent=`${days}d ${String(h).padStart(2,'0')}t`;
+      $('countdownFoot').textContent=now<START?'til start \u00B7 18. nov. kl. 08:00':'til fristen';
+    }
+    async function fetchGitLab() {
+      if(STATE.busy) return;
+      STATE.busy=true; $('refreshTop').disabled=true;
+      setStatus('busy','Henter GitLab \u2026'); notice('');
+      const controller=new AbortController(); STATE.request=controller;
+      try {
+        const collected=[];
+        for(let page=1;page<=CONFIG.maxPages;page++) {
+          const query=new URLSearchParams({state:'merged',scope:'all',search:CONFIG.term,per_page:String(CONFIG.pageSize),page:String(page)});
+          // Intentionally omit merged_after/merged_before because some GitLab versions ignore them.
+          // We locally enforce both bounds on merged_at, after fetching every matching MR.
+          const url=`${CONFIG.base}/api/v4/projects/${CONFIG.project}/merge_requests?${query}`;
+          const response=await fetch(url,{method:'GET',credentials:new URL(location.href).origin===new URL(CONFIG.base).origin?'same-origin':'omit',cache:'no-store',signal:controller.signal});
+          if(!response.ok) throw Error(`GitLab API HTTP ${response.status}${response.status===401||response.status===403?' \u2013 API-et krever autentisering eller gir ikke anonym tilgang':''}${response.status===429?' \u2013 for mange foresp\u00F8rsler':''}`);
+          const entries=await response.json();
+          if(!Array.isArray(entries)) throw Error('GitLab API returnerte ikke en liste med MRs.');
+          collected.push(...entries);
+          setStatus('busy',`Henter GitLab \u00B7 side ${page} \u00B7 ${collected.length} treff`);
+          const next=response.headers.get('x-next-page');
+          if(next && /^\d+$/.test(next) && Number(next)>page) { if(Number(next)!==page+1) throw Error('Uventet paginering fra GitLab.'); continue; }
+          if(entries.length<CONFIG.pageSize) break;
+          if(page===CONFIG.maxPages) throw Error('For mange s\u00F8keresultater. Avbrutt for \u00E5 unng\u00E5 en ufullstendig rangering.');
+        }
+        loadData(collected,'GitLab API');
+      } catch(err) {
+        setStatus('bad',STATE.hasData?'Oppdatering feilet':'Henting feilet');
+        const extra=err instanceof TypeError?' Mulig CORS-/nettverksproblem ved direkte tilgang fra HTML-fil. API-et kan \u00E5pnes i en fane uten at JavaScript f\u00E5r lese svaret. Pr\u00F8v JSON-import via GitLab CLI: glab api --hostname gitlab.statnett.no --paginate "projects/670/merge_requests?state=merged&scope=all&search=OIS-6712&per_page=100" > ois-6712-mrs.json':'';
+        notice(`${err.message||String(err)}.${extra}`,'error');
+      } finally { STATE.busy=false; STATE.request=null; $('refreshTop').disabled=false; }
+    }
+    function demoData() {
+      const people=[{id:101,username:'ada.demo',name:'Ada Eksempel'},{id:102,username:'linus.demo',name:'Linus Eksempel'},{id:103,username:'grace.demo',name:'Grace Eksempel'},{id:104,username:'alex.demo',name:'Alex Eksempel'},{id:105,username:'kim.demo',name:'Kim Eksempel'}];
+      const owners=[0,1,0,2,0,3,1,2,0,4,1,2,3,0,4,1,2,0];
+      const fixes=['Presiserer agentens kodekonvensjoner','Ny skill for Kafka-feils\u00F8king','Bedre instruksjoner for testdekning','Dokumenterer vanlige API-feil','Forenkler /ois-retro workflow','Agent-sjekkliste for review','Oppdaterer Wicket-guidelines','Ny kommando for OIS observability'];
+      return owners.map((index,i)=>({id:90000+i,iid:2500+i,project_id:CONFIG.project,state:'merged',title:`${CONFIG.term}: ${fixes[i%fixes.length]}`,description:'Demodata for konkurransen',merged_at:new Date(START+((i*61+30)*60000)).toISOString(),author:people[index],web_url:`${CONFIG.base}/example/-/merge_requests/${2500+i}`}));
+    }
+    function saveBlob(content,type,filename) {
+      const url=URL.createObjectURL(new Blob([content],{type}));
+      const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+    }
+    function csvCell(v) { return '"'+String(v??'').replace(/"/g,'""')+'"'; }
+    function exportCSV() {
+      if(!STATE.hasData) return;
+      const rows=[['Plass','Forfatter','Brukernavn','Antall MRs','MR-IDer'],...STATE.leaders.map(x=>[x.place,x.name,x.username,x.count,x.mrs.map(m=>`!${m.iid??m.id}`).join(' ')] )];
+      saveBlob('\ufeff'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n'),'text/csv;charset=utf-8','ois-6712-leaderboard.csv');
+    }
+    $('refreshTop').addEventListener('click',fetchGitLab);
+    $('importBtn').addEventListener('click',()=>{$('jsonFile').click(); $('toolsMenu').open=false;});
+    $('jsonFile').addEventListener('change',async event=>{
+      const file=event.target.files?.[0]; if(!file)return;
+      try { const mrs=normalizedJSON(await file.text()); loadData(mrs,`Fil: ${file.name}`); }
+      catch(err) {setStatus('bad','Import feilet');notice(err.message,'error');}
+      event.target.value='';
+    });
+    $('demoBtn').addEventListener('click',()=>{loadData(demoData(),'DEMO',true); $('toolsMenu').open=false;});
+    $('exportBtn').addEventListener('click',()=>{exportCSV(); $('toolsMenu').open=false;});
+    $('podium').addEventListener('click',e=>{ const button=e.target.closest('[data-user]'); if(button){STATE.selectedUser=STATE.selectedUser===button.dataset.user?null:button.dataset.user; renderPodium();renderLeaders();renderFeed();} });
+    $('leaderList').addEventListener('click',e=>{ const button=e.target.closest('[data-user]'); if(button){STATE.selectedUser=STATE.selectedUser===button.dataset.user?null:button.dataset.user; renderPodium();renderLeaders();renderFeed();} });
+    $('activeFilter').addEventListener('click',e=>{if(e.target.id==='clearUser'){STATE.selectedUser=null;renderPodium();renderLeaders();renderFeed();}});
+    $('chart').addEventListener('click',e=>{const button=e.target.closest('[data-day]');if(button){STATE.selectedDay=STATE.selectedDay===button.dataset.day?null:button.dataset.day;renderChart();renderFeed();}});
+    $('clearDay').addEventListener('click',()=>{STATE.selectedDay=null;renderChart();renderFeed();});
+    $('autoRefresh').addEventListener('change',e=>{
+      if(STATE.autoTimer) clearInterval(STATE.autoTimer);
+      STATE.autoTimer=e.target.checked?setInterval(()=>{if(!STATE.isDemo && !STATE.busy) fetchGitLab();},120000):null;
+    });
+    $('fullscreenBtn').addEventListener('click',async()=>{
+      try {
+        if(document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch(err) { notice(`Kunne ikke aktivere fullskjerm: ${err.message||err}. Bruk F11 i nettleseren.`, 'error'); }
+    });
+    document.addEventListener('fullscreenchange',()=>{
+      const full=Boolean(document.fullscreenElement), btn=$('fullscreenBtn');
+      btn.title=full?'Avslutt fullskjerm':'Vis i fullskjerm';
+      btn.setAttribute('aria-label',btn.title);
+      btn.innerHTML=full?'\u26F6 <span>Avslutt</span>':'\u26F6 <span>Fullskjerm</span>';
+    });
+    document.addEventListener('click',e=>{
+      const tools=$('toolsMenu');
+      if(tools.open && !tools.contains(e.target)) tools.open=false;
+    });
+    // Default to live refresh for a wall-mounted presentation screen.
+    STATE.autoTimer=setInterval(()=>{if(!STATE.isDemo && !STATE.busy) fetchGitLab();},120000);
+    renderCountdown(); setInterval(renderCountdown,1000); render(); fetchGitLab();
+  </script>
+</body>
+</html>
